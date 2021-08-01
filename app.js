@@ -12,6 +12,35 @@ require('dotenv').config();
 
 const app = express();
 app.use(bodyParser.json());
+
+const getEvents = async eventsIds => {
+  try {
+    const events = await Event.find({ _id: { $in: eventsIds } });
+
+    return events.map(event => ({
+      ...event._doc,
+      creator: getUser.bind(this, event._doc.creator),
+    }));
+  } catch (e) {
+    console.error(e);
+    throw e;
+  }
+};
+
+const getUser = async userId => {
+  try {
+    const user = await User.findById(userId);
+    return {
+      ...user._doc,
+      password: null,
+      createdEvents: getEvents.bind(this, user._doc.createdEvents),
+    };
+  } catch (e) {
+    console.error(e);
+    throw e;
+  }
+};
+
 app.use('/graphql', graphqlHTTP({
   schema: buildSchema(`
     type Event {
@@ -59,14 +88,10 @@ app.use('/graphql', graphqlHTTP({
   `),
   rootValue: {
     events: () => Event.find()
-      .populate([
-        {
-          path: 'creator',
-          model: 'User',
-          populate: 'createdEvents',
-        },
-      ])
-      .then(result => result.map(event => ({ ...event._doc })))
+      .then(result => result.map(event => ({
+        ...event._doc,
+        creator: getUser.bind(this, event._doc.creator),
+      })))
       .catch(error => {
         console.error(error);
         throw error;
@@ -82,8 +107,7 @@ app.use('/graphql', graphqlHTTP({
     }) => {
       try {
 
-        const user = await User.findById(creator)
-          .populate('createdEvents');
+        const user = await User.findById(creator);
 
         if (!user) {
           throw new Error('User not found!');
@@ -104,10 +128,7 @@ app.use('/graphql', graphqlHTTP({
 
         return ({
           ...event._doc,
-          creator: {
-            ...user._doc,
-            password: null,
-          },
+          creator: getUser.bind(this, event._doc.creator),
         });
       } catch (e) {
         console.error(e);
