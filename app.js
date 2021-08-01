@@ -67,6 +67,7 @@ app.use('/graphql', graphqlHTTP({
         description,
         price,
         date,
+        creator,
       },
     }) => {
       const event = new Event({
@@ -74,6 +75,7 @@ app.use('/graphql', graphqlHTTP({
         description,
         price,
         date: new Date(date),
+        creator,
       });
 
       return event.save()
