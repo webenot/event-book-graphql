@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
+const mongoose = require('mongoose');
 
 require('dotenv').config();
 
@@ -84,6 +85,19 @@ app.use('/graphql', graphqlHTTP({
   },
   graphiql: process.env.NODE_ENV === 'development',
 }));
+
+mongoose.connect(process.env.MONGO_URI,
+  {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  },
+)
+  .then(() => {
+    console.log('Mongo DB connected successfully');
+  })
+  .catch(error => {
+    console.error(error);
+  });
 
 const PORT = Number(process.env.PORT) || 5000;
 
