@@ -90,6 +90,10 @@ app.use('/graphql', graphqlHTTP({
       },
     }) => {
       try {
+        const existUser = await User.findOne({ email });
+        if (existUser) {
+          throw new Error('User exists already!');
+        }
         const hashedPassword = await argon2.hash(
           password,
           {
