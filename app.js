@@ -41,7 +41,12 @@ app.use('/graphql', graphqlHTTP({
     }
   `),
   rootValue: {
-    events: () => Event.find(),
+    events: () => Event.find()
+      .then(result => result.map(event => ({ ...event._doc })))
+      .catch(error => {
+        console.error(error);
+        throw error;
+      }),
     createEvent: ({
       eventInput: {
         title,
@@ -73,6 +78,8 @@ mongoose.connect(
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    useCreateIndex: true,
+    useFindAndModify: false,
   },
 )
   .then(() => {
