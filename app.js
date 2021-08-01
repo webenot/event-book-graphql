@@ -32,6 +32,7 @@ app.use('/graphql', graphqlHTTP({
     type User {
       _id: String!
       email: String!
+      password: String
     }
     
     input UserInput {
@@ -89,7 +90,8 @@ app.use('/graphql', graphqlHTTP({
       },
     }) => {
       try {
-        const hashedPassword = await argon2.hash(password,
+        const hashedPassword = await argon2.hash(
+          password,
           {
             type: argon2.argon2id,
             saltLength: 12,
@@ -100,7 +102,10 @@ app.use('/graphql', graphqlHTTP({
           password: hashedPassword,
         });
         await user.save();
-        return user;
+        return {
+          ...user._doc,
+          password: null,
+        };
       } catch (e) {
         console.error(e);
         throw e;
