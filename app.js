@@ -3,8 +3,10 @@ const bodyParser = require('body-parser');
 const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
 const mongoose = require('mongoose');
+const argon2 = require('argon2');
 
 const Event = require('model/event.model');
+const User = require('model/user.model');
 
 require('dotenv').config();
 
@@ -26,6 +28,16 @@ app.use('/graphql', graphqlHTTP({
       price: Float!
       date: String!
     }
+    
+    type User {
+      _id: String!
+      email: String!
+    }
+    
+    input UserInput {
+      email: String!
+      password: String!
+    }
   
     type RootQuery {
       events: [Event!]!
@@ -33,6 +45,7 @@ app.use('/graphql', graphqlHTTP({
     
     type RootMutation {
       createEvent(eventInput: EventInput): Event
+      createUser(userInput: UserInput): User
     }
     
     schema {
@@ -68,6 +81,30 @@ app.use('/graphql', graphqlHTTP({
           console.error(error);
           throw error;
         });
+    },
+    createUser: async ({
+      userInput: {
+        email,
+        password,
+      },
+    }) => {
+      try {
+        const hashedPassword = await argon2.hash(password,
+          {
+            type: argon2.argon2id,
+            saltLength: 12,
+          },
+        );
+        const user = new User({
+          email,
+          password: hashedPassword,
+        });
+        await user.save();
+        return user;
+      } catch (e) {
+        console.error(e);
+        throw e;
+      }
     },
   },
   graphiql: process.env.NODE_ENV === 'development',
