@@ -59,6 +59,7 @@ app.use('/graphql', graphqlHTTP({
   `),
   rootValue: {
     events: () => Event.find()
+      .populate('creator')
       .then(result => result.map(event => ({ ...event._doc })))
       .catch(error => {
         console.error(error);
