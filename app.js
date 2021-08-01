@@ -35,7 +35,7 @@ app.use('/graphql', graphqlHTTP({
       _id: String!
       email: String!
       password: String
-      createdEvents: [String!]!
+      createdEvents: [Event!]
     }
     
     input UserInput {
@@ -59,7 +59,13 @@ app.use('/graphql', graphqlHTTP({
   `),
   rootValue: {
     events: () => Event.find()
-      .populate('creator')
+      .populate([
+        {
+          path: 'creator',
+          model: 'User',
+          populate: 'createdEvents',
+        },
+      ])
       .then(result => result.map(event => ({ ...event._doc })))
       .catch(error => {
         console.error(error);
@@ -76,7 +82,9 @@ app.use('/graphql', graphqlHTTP({
     }) => {
       try {
 
-        const user = await User.findById(creator);
+        const user = await User.findById(creator)
+          .populate('createdEvents');
+
         if (!user) {
           throw new Error('User not found!');
         }
