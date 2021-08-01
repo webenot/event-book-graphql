@@ -25,8 +25,8 @@ app.use('/graphql', graphqlHTTP({
     
     input EventInput {
       title: String!
-      description: String!
-      price: Float!
+      description: String
+      price: Float
       date: String!
       creator: String!
     }
@@ -35,6 +35,7 @@ app.use('/graphql', graphqlHTTP({
       _id: String!
       email: String!
       password: String
+      createdEvents: [String!]!
     }
     
     input UserInput {
@@ -63,7 +64,7 @@ app.use('/graphql', graphqlHTTP({
         console.error(error);
         throw error;
       }),
-    createEvent: ({
+    createEvent: async ({
       eventInput: {
         title,
         description,
@@ -72,20 +73,37 @@ app.use('/graphql', graphqlHTTP({
         creator,
       },
     }) => {
-      const event = new Event({
-        title,
-        description,
-        price,
-        date: new Date(date),
-        creator,
-      });
+      try {
 
-      return event.save()
-        .then(result => ({ ...result._doc }))
-        .catch(error => {
-          console.error(error);
-          throw error;
+        const user = await User.findById(creator);
+        if (!user) {
+          throw new Error('User not found!');
+        }
+
+        const event = new Event({
+          title,
+          description: description || '',
+          price: price || 0,
+          date: new Date(date),
+          creator,
         });
+
+        await event.save();
+
+        user.createdEvents.push(event);
+        await user.save();
+
+        return ({
+          ...event._doc,
+          creator: {
+            ...user._doc,
+            password: null,
+          },
+        });
+      } catch (e) {
+        console.error(e);
+        throw e;
+      }
     },
     createUser: async ({
       userInput: {
