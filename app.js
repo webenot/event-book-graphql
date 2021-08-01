@@ -4,31 +4,9 @@ const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
 const mongoose = require('mongoose');
 
-require('dotenv').config();
+const Event = require('model/events.model');
 
-const EVENTS = [
-  {
-    _id: '1',
-    title: 'Romantic Cooking',
-    description: 'Romantic Cooking description',
-    price: 10,
-    date: '01-08-2021',
-  },
-  {
-    _id: '2',
-    title: 'Sailing',
-    description: 'Sailing description',
-    price: 20,
-    date: '02-08-2021',
-  },
-  {
-    _id: '3',
-    title: 'All Night Coding',
-    description: 'All Night Coding description',
-    price: 30,
-    date: '03-08-2021',
-  },
-];
+require('dotenv').config();
 
 const app = express();
 app.use(bodyParser.json());
@@ -63,7 +41,12 @@ app.use('/graphql', graphqlHTTP({
     }
   `),
   rootValue: {
-    events: () => EVENTS,
+    events: () => Event.find()
+      .then(result => result.map(event => ({ ...event._doc })))
+      .catch(error => {
+        console.error(error);
+        throw error;
+      }),
     createEvent: ({
       eventInput: {
         title,
@@ -72,35 +55,41 @@ app.use('/graphql', graphqlHTTP({
         date,
       },
     }) => {
-      const event = {
-        _id: Math.random().toString(),
+      const event = new Event({
         title,
         description,
         price,
-        date,
-      };
-      EVENTS.push(event);
-      return event;
+        date: new Date(date),
+      });
+
+      return event.save()
+        .then(result => ({ ...result._doc }))
+        .catch(error => {
+          console.error(error);
+          throw error;
+        });
     },
   },
   graphiql: process.env.NODE_ENV === 'development',
 }));
 
-mongoose.connect(process.env.MONGO_URI,
+mongoose.connect(
+  process.env.MONGO_URI,
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    useCreateIndex: true,
+    useFindAndModify: false,
   },
 )
   .then(() => {
     console.log('Mongo DB connected successfully');
+    const PORT = Number(process.env.PORT) || 5000;
+
+    app.listen(PORT, () => {
+      console.log(`Server started on http://localhost:${PORT}`);
+    });
   })
   .catch(error => {
     console.error(error);
   });
-
-const PORT = Number(process.env.PORT) || 5000;
-
-app.listen(PORT, () => {
-  console.log(`Server started on http://localhost:${PORT}`);
-});
