@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/webenot/event-book-graphql#readme",
   "dependencies": {
+    "argon2": "^0.28.2",
     "body-parser": "^1.19.0",
     "cross-env": "^7.0.3",
     "dotenv": "^10.0.0",

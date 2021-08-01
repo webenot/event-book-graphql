@@ -3,8 +3,10 @@ const bodyParser = require('body-parser');
 const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
 const mongoose = require('mongoose');
+const argon2 = require('argon2');
 
-const Event = require('model/events.model');
+const Event = require('model/event.model');
+const User = require('model/user.model');
 
 require('dotenv').config();
 
@@ -18,13 +20,27 @@ app.use('/graphql', graphqlHTTP({
       description: String!
       price: Float!
       date: String!
+      creator: User!
     }
     
     input EventInput {
       title: String!
-      description: String!
-      price: Float!
+      description: String
+      price: Float
       date: String!
+      creator: String!
+    }
+    
+    type User {
+      _id: String!
+      email: String!
+      password: String
+      createdEvents: [String!]!
+    }
+    
+    input UserInput {
+      email: String!
+      password: String!
     }
   
     type RootQuery {
@@ -33,6 +49,7 @@ app.use('/graphql', graphqlHTTP({
     
     type RootMutation {
       createEvent(eventInput: EventInput): Event
+      createUser(userInput: UserInput): User
     }
     
     schema {
@@ -47,27 +64,78 @@ app.use('/graphql', graphqlHTTP({
         console.error(error);
         throw error;
       }),
-    createEvent: ({
+    createEvent: async ({
       eventInput: {
         title,
         description,
         price,
         date,
+        creator,
       },
     }) => {
-      const event = new Event({
-        title,
-        description,
-        price,
-        date: new Date(date),
-      });
+      try {
 
-      return event.save()
-        .then(result => ({ ...result._doc }))
-        .catch(error => {
-          console.error(error);
-          throw error;
+        const user = await User.findById(creator);
+        if (!user) {
+          throw new Error('User not found!');
+        }
+
+        const event = new Event({
+          title,
+          description: description || '',
+          price: price || 0,
+          date: new Date(date),
+          creator,
         });
+
+        await event.save();
+
+        user.createdEvents.push(event);
+        await user.save();
+
+        return ({
+          ...event._doc,
+          creator: {
+            ...user._doc,
+            password: null,
+          },
+        });
+      } catch (e) {
+        console.error(e);
+        throw e;
+      }
+    },
+    createUser: async ({
+      userInput: {
+        email,
+        password,
+      },
+    }) => {
+      try {
+        const existUser = await User.findOne({ email });
+        if (existUser) {
+          throw new Error('User exists already!');
+        }
+        const hashedPassword = await argon2.hash(
+          password,
+          {
+            type: argon2.argon2id,
+            saltLength: 12,
+          },
+        );
+        const user = new User({
+          email,
+          password: hashedPassword,
+        });
+        await user.save();
+        return {
+          ...user._doc,
+          password: null,
+        };
+      } catch (e) {
+        console.error(e);
+        throw e;
+      }
     },
   },
   graphiql: process.env.NODE_ENV === 'development',
