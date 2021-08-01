@@ -4,7 +4,7 @@ const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
 const mongoose = require('mongoose');
 
-const Event = require('model/events.model');
+const Event = require('model/event.model');
 
 require('dotenv').config();
 
