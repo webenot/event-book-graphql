@@ -94,13 +94,12 @@ mongoose.connect(process.env.MONGO_URI,
 )
   .then(() => {
     console.log('Mongo DB connected successfully');
+    const PORT = Number(process.env.PORT) || 5000;
+
+    app.listen(PORT, () => {
+      console.log(`Server started on http://localhost:${PORT}`);
+    });
   })
   .catch(error => {
     console.error(error);
   });
-
-const PORT = Number(process.env.PORT) || 5000;
-
-app.listen(PORT, () => {
-  console.log(`Server started on http://localhost:${PORT}`);
-});
