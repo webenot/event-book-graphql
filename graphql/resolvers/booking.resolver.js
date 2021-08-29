@@ -1,46 +1,48 @@
 const Booking = require('model/booking.model');
 
-const { transformBooking, transformEvent } = require('graphql/resolvers/transformers');
+const {
+  transformBooking,
+  transformEvent,
+} = require('graphql/resolvers/transformers');
 
 module.exports = {
-  bookings: async () => {
-    try {
-      const bookings = await Booking.find();
-      return bookings.map(booking => transformBooking(booking));
-    } catch (e) {
-      console.error(e);
-      throw e;
+  bookings: async (_, req) => {
+    if (!req.isAuth) {
+      throw new Error('Unauthenticated');
     }
+
+    const bookings = await Booking.find({ user: req.user._id });
+    return bookings.map(booking => transformBooking(booking));
   },
-  bookEvent: async ({ eventId }) => {
-    try {
-      const booking = new Booking({
-        user: '61066fd4ac5e4633600a381c',
-        event: eventId,
-      });
-
-      const result = await booking.save();
-
-      return transformBooking(result);
-    } catch (e) {
-      console.error(e);
-      throw e;
+  bookEvent: async ({ eventId }, req) => {
+    if (!req.isAuth) {
+      throw new Error('Unauthenticated');
     }
+
+    const booking = new Booking({
+      user: req.user._id,
+      event: eventId,
+    });
+
+    const result = await booking.save();
+
+    return transformBooking(result);
   },
-  cancelBooking: async ({ bookingId }) => {
-    try {
-      const booking = await Booking.findById(bookingId).populate('event');
-      if (!booking) {
-        throw new Error('Booking not found');
-      }
-      const event = transformEvent(booking.event);
-
-      await Booking.deleteOne({ _id: bookingId });
-
-      return event;
-    } catch (e) {
-      console.error(e);
-      throw e;
+  cancelBooking: async ({ bookingId }, req) => {
+    if (!req.isAuth) {
+      throw new Error('Unauthenticated');
     }
+
+    const booking = await Booking.findOne({ _id: bookingId, user: req.user._id })
+      .populate('event');
+    if (!booking) {
+      throw new Error('Booking not found');
+    }
+    const event = transformEvent(booking.event);
+
+    booking.canceled = true;
+    await booking.save();
+
+    return event;
   },
 };

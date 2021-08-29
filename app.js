@@ -12,10 +12,18 @@ require.extensions['.graphql'] = function (module, filename) {
 const graphqlSchema = require('graphql/schema');
 const graphqlResolvers = require('graphql/resolvers');
 
+const {
+  hasAuthToken,
+  isAuthenticated,
+} = require('middlewares');
+
 require('dotenv').config();
 
 const app = express();
 app.use(bodyParser.json());
+
+app.use(hasAuthToken);
+app.use(isAuthenticated);
 
 app.use('/graphql', graphqlHTTP({
   schema: graphqlSchema,
