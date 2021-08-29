@@ -3,6 +3,12 @@ const bodyParser = require('body-parser');
 const { graphqlHTTP } = require('express-graphql');
 const mongoose = require('mongoose');
 
+const fs = require('fs');
+
+require.extensions['.graphql'] = function (module, filename) {
+  module.exports = fs.readFileSync(filename, 'utf8');
+};
+
 const graphqlSchema = require('graphql/schema');
 const graphqlResolvers = require('graphql/resolvers');
 

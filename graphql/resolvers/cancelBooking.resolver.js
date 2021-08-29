@@ -1,6 +1,6 @@
 const Booking = require('model/booking.model');
 
-const { getUser } = require('graphql/resolvers/methods');
+const { transformEvent } = require('graphql/resolvers/transformers');
 
 module.exports = {
   cancelBooking: async ({ bookingId }) => {
@@ -9,11 +9,7 @@ module.exports = {
       if (!booking) {
         throw new Error('Booking not found');
       }
-      const event = {
-        ...booking._doc.event._doc,
-        _id: booking._doc.event.id,
-        creator: getUser.bind(this, booking._doc.event._doc.creator),
-      };
+      const event = transformEvent(booking.event);
 
       await Booking.deleteOne({ _id: bookingId });
 

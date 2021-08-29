@@ -1,4 +1,4 @@
-const { getUser } = require('graphql/resolvers/methods');
+const { transformEvent } = require('graphql/resolvers/transformers');
 
 const User = require('model/user.model');
 const Event = require('model/event.model');
@@ -29,16 +29,12 @@ module.exports = {
         creator,
       });
 
-      await event.save();
+      const result = await event.save();
 
-      user.createdEvents.push(event);
+      user.createdEvents.push(result);
       await user.save();
 
-      return ({
-        ...event._doc,
-        date: new Date(event._doc.date).toISOString(),
-        creator: getUser.bind(this, event._doc.creator),
-      });
+      return transformEvent(result);
     } catch (e) {
       console.error(e);
       throw e;

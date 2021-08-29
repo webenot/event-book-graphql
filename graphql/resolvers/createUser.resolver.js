@@ -2,6 +2,8 @@ const argon2 = require('argon2');
 
 const User = require('model/user.model');
 
+const { transformUser } = require('graphql/resolvers/transformers');
+
 module.exports = {
   createUser: async ({
     userInput: {
@@ -25,11 +27,8 @@ module.exports = {
         email,
         password: hashedPassword,
       });
-      await user.save();
-      return {
-        ...user._doc,
-        password: null,
-      };
+      const result = await user.save();
+      return transformUser(result);
     } catch (e) {
       console.error(e);
       throw e;
