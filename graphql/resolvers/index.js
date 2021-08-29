@@ -1,9 +1,6 @@
-const { events } = require('graphql/resolvers/events.resolver');
-const { bookings } = require('graphql/resolvers/bookings.resolver');
-const { createEvent } = require('graphql/resolvers/createEvent.resolver');
-const { createUser } = require('graphql/resolvers/createUser.resolver');
-const { bookEvent } = require('graphql/resolvers/bookEvent.resolver');
-const { cancelBooking } = require('graphql/resolvers/cancelBooking.resolver');
+const { events, createEvent } = require('graphql/resolvers/event.resolver');
+const { bookings, bookEvent, cancelBooking } = require('graphql/resolvers/booking.resolver');
+const { createUser } = require('graphql/resolvers/user.resolver');
 
 module.exports = {
   events,

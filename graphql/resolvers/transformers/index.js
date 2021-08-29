@@ -19,7 +19,7 @@ const transformBooking = booking => ({
   ...booking._doc,
   _id: booking.id,
   user: getUser.bind(this, booking._doc.user),
-  event: singleEvent.bind(this, booking._doc.event),
+  event: getSingleEvent.bind(this, booking._doc.event),
   createdAt: new Date(booking._doc.createdAt),
   updatedAt: new Date(booking._doc.updatedAt),
 });
@@ -51,7 +51,7 @@ const getEvents = async eventsIds => {
   }
 };
 
-const singleEvent = async eventId => {
+const getSingleEvent = async eventId => {
   try {
     const event = await Event.findById(eventId);
     if (!event) {

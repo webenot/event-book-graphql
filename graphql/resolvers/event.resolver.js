@@ -1,9 +1,19 @@
 const { transformEvent } = require('graphql/resolvers/transformers');
 
-const User = require('model/user.model');
 const Event = require('model/event.model');
+const User = require('model/user.model');
 
 module.exports = {
+  events: async () => {
+    try {
+      const events = await Event.find();
+
+      return events.map(event => transformEvent(event));
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
+  },
   createEvent: async ({
     eventInput: {
       title,
