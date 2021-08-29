@@ -25,44 +25,29 @@ const transformBooking = booking => ({
 });
 
 const getUser = async userId => {
-  try {
-    const user = await User.findById(userId);
-    if (!user) {
-      throw new Error('User not found!');
-    }
-    return transformUser(user);
-  } catch (e) {
-    console.error(e);
-    throw e;
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error('User not found!');
   }
+  return transformUser(user);
 };
 
 const getEvents = async eventsIds => {
   if (!eventsIds || !eventsIds.length) {
     return [];
   }
-  try {
-    const events = await Event.find({ _id: { $in: eventsIds } });
+  const events = await Event.find({ _id: { $in: eventsIds } });
 
-    return events.map(event => transformEvent(event));
-  } catch (e) {
-    console.error(e);
-    throw e;
-  }
+  return events.map(event => transformEvent(event));
 };
 
 const getSingleEvent = async eventId => {
-  try {
-    const event = await Event.findById(eventId);
-    if (!event) {
-      throw new Error('Event not found!');
-    }
-
-    return transformEvent(event);
-  } catch (e) {
-    console.error(e);
-    throw e;
+  const event = await Event.findById(eventId);
+  if (!event) {
+    throw new Error('Event not found!');
   }
+
+  return transformEvent(event);
 };
 
 module.exports = {
